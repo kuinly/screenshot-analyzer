@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能助手 - 截图分析与沟通助手</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56e4;
+            --secondary: #7209b7;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #212529;
+            --darker: #1a1c23;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #3a0ca3, #4361ee);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 0;
+            background-attachment: fixed;
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部导航 */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 50px;
+            padding: 5px;
+        }
+        
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* 截图分析页面 */
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-gray);
+            color: var(--primary);
+        }
+        
+        .screenshot-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 900px) {
+            .screenshot-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .screenshot-tool {
+            position: relative;
+            height: 300px;
+            border: 2px dashed var(--primary);
+            border-radius: 15px;
+            overflow: hidden;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition);
+        }
+        
+        .screenshot-instruction {
+            padding: 20px;
+            color: var(--gray);
+        }
+        
+        .screenshot-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+        
+        .screenshot-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            color: var(--white);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #e67e22);
+            color: var(--white);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #c0392b);
+            color: var(--white);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            width: 0;
+            transition: width 0.5s ease;
+        }
+        
+        .result-content {
+            min-height: 200px;
+            padding: 20px;
+            background: rgba(233, 236, 239, 0.5);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        /* 聊天助手页面 */
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            height: 65vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-gray);
+        }
+        
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(233, 236, 239, 0.4);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 15px;
+            border-radius: 15px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .assistant-message {
+            align-self: flex-start;
+            background: white;
+            border: 1px solid var(--light-gray);
+            border-bottom-left-radius: 5px;
+            box-shadow: var(--shadow);
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .user-avatar {
+            background: var(--secondary);
+        }
+        
+        .assistant-avatar {
+            background: var(--primary);
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 50px;
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+        
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        .send-btn {
+            padding: 0 25px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.03);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            display: none;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        /* 设置页面 */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .setting-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            background: white;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .nav-tab {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .screenshot-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-messages {
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-robot fa-lg" style="color: #4361ee;"></i>
+                <h1>智能助手工具</h1>
+            </div>
+            <div class="nav-tabs">
+                <div class="nav-tab active" data-page="screenshot">
+                    <i class="fas fa-camera"></i> 截图分析
+                </div>
+                <div class="nav-tab" data-page="chat">
+                    <i class="fas fa-comments"></i> 聊天助手
+                </div>
+                <div class="nav-tab" data-page="settings">
+                    <i class="fas fa-cog"></i> 设置
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- 截图分析页面 -->
+            <div class="page active" id="screenshot-page">
+                <div class="panel">
+                    <div class="panel-title">
+                        <i class="fas fa-camera"></i>
+                        <h2>截图分析工具</h2>
+                    </div>
+                    
+                    <div class="screenshot-container">
+                        <div class="screenshot-tool">
+                            <div class="screenshot-instruction">
+                                <div class="notification-icon" style="background: var(--primary); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 24px;">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h3>上传截图进行分析</h3>
+                                <p>支持 PNG, JPG 格式图片</p>
+                            </div>
+                            <img src="" alt="截图预览" class="screenshot-preview" id="screenshot-preview">
+                        </div>
+                        
+                        <div class="screenshot-instructions">
+                            <div style="background: rgba(67, 97, 238, 0.1); border-radius: 15px; padding: 20px; height: 100%;">
+                                <h3 style="color: var(--primary); margin-bottom: 15px;"><i class="fas fa-lightbulb"></i> 使用说明</h3>
+                                <ul style="padding-left: 20px; color: var(--dark);">
+                                    <li style="margin-bottom: 10px;">1. 点击"选择图片"按钮上传截图</li>
+                                    <li style="margin-bottom: 10px;">2. 点击"智能分析"按钮进行识别</li>
+                                    <li style="margin-bottom: 10px;">3. 查看分析结果和任务类型</li>
+                                    <li style="margin-bottom: 10px;">4. 设置截止时间提醒功能</li>
+                                </ul>
+                                
+                                <div style="margin-top: 20px; background: white; border-radius: 10px; padding: 15px; box-shadow: var(--shadow);">
+                                    <h4 style="color: var(--primary); margin-bottom: 10px;">支持识别的类型</h4>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                        <span style="background: rgba(67, 97, 238, 0.1); color: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: 0.85rem;">会议通知</span>
+                                        <span style="background: rgba(46, 204, 113, 0.1); color: var(--success); padding: 5px 10px; border-radius: 20px; font-size: 0.85rem;">任务提醒</span>
+                                        <span style="background: rgba(243, 156, 18, 0.1); color: var(--warning); padding: 5px 10px; border-radius: 20px; font-size: 0.85rem;">截止日期</span>
+                                        <span style="background: rgba(155, 89, 182, 0.1); color: #9b59b6; padding: 5px 10px; border-radius: 20px; font-size: 0.85rem;">事件通知</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="screenshot-controls">
+                        <button class="btn" id="upload-btn">
+                            <i class="fas fa-upload"></i> 选择图片
+                        </button>
+                        <button class="btn btn-success" id="analyze-btn" disabled>
+                            <i class="fas fa-brain"></i> 智能分析
+                        </button>
+                        <button class="btn btn-danger" id="reset-btn">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="progress-container" id="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress" id="progress-bar"></div>
+                        </div>
+                        <p style="text-align: center; margin-top: 10px;" id="progress-text">正在处理中...</p>
+                    </div>
+                    
+                    <div class="result-content" id="result-content">
+                        <div style="text-align: center; padding: 40px 20px; color: var(--gray);">
+                            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5; color: var(--primary);"></i>
+                            <h3>截取屏幕内容开始分析</h3>
+                            <p>识别通知、任务和会议信息，提取关键截止日期</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天助手页面 -->
+            <div class="page" id="chat-page">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="chat-title">
+                            <i class="fas fa-robot"></i>
+                            <h2>智能聊天助手</h2>
+                        </div>
+                        <div class="ai-info">
+                            <span>基于文心一言API</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message assistant-message">
+                            <div class="message-header">
+                                <div class="avatar assistant-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <strong>聊天助手</strong>
+                            </div>
+                            <div class="message-content">
+                                您好！我是您的智能聊天助手，我可以为您提供各种场景下的沟通建议。无论是工作中的邮件、爱情中的情话，还是社交场合的对话，我都能为您提供专业的建议！
+                            </div>
+                        </div>
+                        <div class="message assistant-message">
+                            <div class="message-header">
+                                <div class="avatar assistant-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <strong>聊天助手</strong>
+                            </div>
+                            <div class="message-content">
+                                请描述您的沟通场景或需要帮助的对话内容，我将为您生成专业的表达建议。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typing-indicator">
+                        <span>助手正在思考</span>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chat-input" placeholder="输入您想表达的或需要帮助的内容...">
+                        <button class="send-btn" id="send-btn">
+                            <i class="fas fa-paper-plane"></i> 发送
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px;">
+                    <div class="panel-title">
+                        <i class="fas fa-lightbulb"></i>
+                        <h2>常用沟通场景</h2>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="background: white; border-radius: 15px; padding: 20px; text-align: center; cursor: pointer; transition: var(--transition);" class="scene-card" data-scene="work">
+                            <div style="width: 60px; height: 60px; background: rgba(67, 97, 238, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: var(--primary); font-size: 24px;">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <h3>职场沟通</h3>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 15px; padding: 20px; text-align: center; cursor: pointer; transition: var(--transition);" class="scene-card" data-scene="love">
+                            <div style="width: 60px; height: 60px; background: rgba(243, 156, 18, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: var(--warning); font-size: 24px;">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <h3>情感表达</h3>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 15px; padding: 20px; text-align: center; cursor: pointer; transition: var(--transition);" class="scene-card" data-scene="social">
+                            <div style="width: 60px; height: 60px; background: rgba(46, 204, 113, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: var(--success); font-size: 24px;">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <h3>社交场合</h3>
+                        </div>
+                        
+                        <div style="background: white; border-radius: 15px; padding: 20px; text-align: center; cursor: pointer; transition: var(--transition);" class="scene-card" data-scene="family">
+                            <div style="width: 60px; height: 60px; background: rgba(155, 89, 182, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: #9b59b6; font-size: 24px;">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <h3>家庭沟通</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 设置页面 -->
+            <div class="page" id="settings-page">
+                <div class="panel">
+                    <div class="panel-title">
+                        <i class="fas fa-cog"></i>
+                        <h2>系统设置</h2>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-key"></i> API密钥设置</h3>
+                            
+                            <div class="form-group">
+                                <label for="baidu-key">百度文心一言API Key</label>
+                                <input type="text" id="baidu-key" placeholder="输入百度API Key">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="baidu-secret">百度文心一言Secret Key</label>
+                                <input type="password" id="baidu-secret" placeholder="输入百度Secret Key">
+                            </div>
+                            
+                            <button class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-save"></i> 保存设置
+                            </button>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-bell"></i> 通知设置</h3>
+                            
+                            <div class="form-group">
+                                <label>任务提醒方式</label>
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" checked> 系统通知
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox"> 邮件提醒
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" checked> 声音提醒
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>默认提醒时间</label>
+                                <select style="width: 100%; padding: 12px 15px; border: 1px solid var(--light-gray); border-radius: 8px; background: white; color: var(--dark); font-size: 1rem;">
+                                    <option>提前15分钟</option>
+                                    <option>提前30分钟</option>
+                                    <option selected>提前1小时</option>
+                                    <option>提前1天</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-user"></i> 账户设置</h3>
+                            
+                            <div class="form-group">
+                                <label for="user-name">用户名</label>
+                                <input type="text" id="user-name" placeholder="输入您的用户名">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="user-email">电子邮箱</label>
+                                <input type="email" id="user-email" placeholder="输入您的电子邮箱">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>通知偏好</label>
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="radio" name="notification" checked> 实时通知
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="radio" name="notification"> 每日摘要
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="radio" name="notification"> 仅重要通知
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-info-circle"></i> 关于应用</h3>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <p>智能助手工具 v1.2.0</p>
+                                <p style="color: var(--gray); font-size: 0.9rem; margin-top: 5px;">最后更新: 2023-10-18</p>
+                            </div>
+                            
+                            <div style="background: rgba(67, 97, 238, 0.1); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                                <h4 style="color: var(--primary); margin-bottom: 10px;">功能模块</h4>
+                                <ul style="list-style-type: none; padding-left: 0;">
+                                    <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>截图分析与提醒</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>智能聊天助手</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>任务管理</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <button class="btn" style="width: 100%; background: rgba(0,0,0,0.05);">
+                                <i class="fas fa-question-circle"></i> 帮助中心
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>智能助手工具 © 2023 | 截图分析与沟通助手一体化解决方案</p>
+            <p>帮助您高效管理任务并提升沟通能力</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 页面切换功能
+        const tabs = document.querySelectorAll('.nav-tab');
+        const pages = document.querySelectorAll('.page');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 更新标签状态
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // 显示对应页面
+                const pageId = `${tab.getAttribute('data-page')}-page`;
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                    if (page.id === pageId) {
+                        setTimeout(() => page.classList.add('active'), 10);
+                    }
+                });
+            });
+        });
+        
+        // 截图功能
+        const uploadBtn = document.getElementById('upload-btn');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const fileInput = document.getElementById('file-input');
+        const screenshotPreview = document.getElementById('screenshot-preview');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const resultContent = document.getElementById('result-content');
+        
+        // 上传图片
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileUpload);
+        
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                screenshotPreview.src = event.target.result;
+                screenshotPreview.style.display = 'block';
+                document.querySelector('.screenshot-instruction').style.display = 'none';
+                analyzeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 重置截图
+        resetBtn.addEventListener('click', resetScreenshot);
+        
+        function resetScreenshot() {
+            screenshotPreview.style.display = 'none';
+            fileInput.value = '';
+            document.querySelector('.screenshot-instruction').style.display = 'block';
+            analyzeBtn.disabled = true;
+            resultContent.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--gray);">
+                    <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5; color: var(--primary);"></i>
+                    <h3>截取屏幕内容开始分析</h3>
+                    <p>识别通知、任务和会议信息，提取关键截止日期</p>
+                </div>
+            `;
+        }
+        
+        // 分析截图
+        analyzeBtn.addEventListener('click', analyzeScreenshot);
+        
+        function analyzeScreenshot() {
+            if (!fileInput.files[0]) return;
+            
+            // 显示加载进度
+            showProgress("正在分析截图...", 0);
+            
+            // 模拟分析进度
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                updateProgress(progress);
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // 模拟分析完成
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        showAnalysisResult();
+                    }, 500);
+                }
+            }, 100);
+        }
+        
+        // 显示分析结果
+        function showAnalysisResult() {
+            // 模拟结果
+            const result = `
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <h3 style="color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-tasks"></i>
+                            分析结果
+                        </h3>
+                        <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: var(--shadow);">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <div style="width: 40px; height: 40px; background: rgba(243, 156, 18, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--warning);">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0;">会议通知</h4>
+                                    <p style="margin: 0; color: var(--gray); font-size: 0.9rem;">检测到会议通知信息</p>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <div style="display: flex; gap: 15px; margin-bottom: 10px;">
+                                    <div style="flex: 1;">
+                                        <label style="font-size: 0.9rem; color: var(--gray);">会议主题</label>
+                                        <p style="margin: 5px 0 0; font-weight: 500;">项目进度评审会</p>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label style="font-size: 0.9rem; color: var(--gray);">日期时间</label>
+                                        <p style="margin: 5px 0 0; font-weight: 500;">2023-10-25 14:30</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <label style="font-size: 0.9rem; color: var(--gray);">参会人员</label>
+                                    <p style="margin: 5px 0 0; font-weight: 500;">全体项目组成员，技术总监</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 250px;">
+                        <h3 style="color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-bell"></i>
+                            提醒设置
+                        </h3>
+                        <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: var(--shadow);">
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                                <button class="btn" style="background: rgba(67, 97, 238, 0.1); color: var(--primary);">提前15分钟</button>
+                                <button class="btn" style="background: rgba(67, 97, 238, 0.1); color: var(--primary);">提前30分钟</button>
+                                <button class="btn" style="background: var(--primary); color: white;">提前1小时</button>
+                                <button class="btn" style="background: rgba(67, 97, 238, 0.1); color: var(--primary);">提前1天</button>
+                            </div>
+                            
+                            <button class="btn" style="background: var(--success); color: white; width: 100%;">
+                                <i class="fas fa-calendar-plus"></i> 添加到日历
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultContent.innerHTML = result;
+        }
+        
+        // 聊天功能
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+        
+        // 发送消息
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // 添加用户消息
+            addMessage(message, 'user');
+            chatInput.value = '';
+            
+            // 显示"正在输入"状态
+            typingIndicator.style.display = 'flex';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // 模拟API调用延迟
+            setTimeout(() => {
+                typingIndicator.style.display = 'none';
+                // 生成智能回复
+                generateReply(message);
+            }, 1500);
+        }
+        
+        // 添加消息到聊天窗口
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'assistant-message');
+            
+            const header = document.createElement('div');
+            header.classList.add('message-header');
+            
+            const avatar = document.createElement('div');
+            avatar.classList.add('avatar');
+            avatar.classList.add(sender === 'user' ? 'user-avatar' : 'assistant-avatar');
+            
+            if (sender === 'user') {
+                avatar.innerHTML = '<i class="fas fa-user"></i>';
+                header.innerHTML = `
+                    ${avatar.outerHTML}
+                    <strong>您</strong>
+                `;
+            } else {
+                avatar.innerHTML = '<i class="fas fa-robot"></i>';
+                header.innerHTML = `
+                    ${avatar.outerHTML}
+                    <strong>聊天助手</strong>
+                `;
+            }
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(header);
+            messageDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // 生成智能回复
+        function generateReply(userMessage) {
+            let reply = "";
+            
+            // 根据用户消息生成智能回复（实际应用中会调用API）
+            if (userMessage.toLowerCase().includes("工作") || userMessage.toLowerCase().includes("职场")) {
+                reply = "在职场沟通中，我建议：\n1. 使用清晰、专业的语言表达\n2. 保持积极态度，避免负面词汇\n3. 提供解决方案而不仅仅是提出问题\n4. 尊重他人时间，简明扼要\n\n例如您可以这样说：'关于这个项目，我建议我们采用A方案，因为它能节省20%的时间并且符合预算要求。我可以准备一份详细报告供团队讨论。'";
+            } 
+            else if (userMessage.toLowerCase().includes("情") || userMessage.toLowerCase().includes("爱")) {
+                reply = "在情感表达方面，我建议：\n1. 真诚表达自己的感受\n2. 使用'我'语句而非指责性语言\n3. 积极倾听对方的感受\n4. 在合适的时机表达\n\n您可以尝试这样说：'最近我感到我们之间有些疏远，我真的很在乎这段关系。我们可以找个时间好好聊聊吗？我想了解你的感受，也分享我的想法。'";
+            }
+            else if (userMessage.toLowerCase().includes("朋友") || userMessage.toLowerCase().includes("社交")) {
+                reply = "在社交场合中，建议您：\n1. 以开放式问题开始对话\n2. 积极倾听并给予回应\n3. 寻找共同兴趣点\n4. 保持轻松友好的态度\n\n例如初次见面可以这样聊：'您好！我是[您的名字]。听说您对徒步旅行很感兴趣？我也很喜欢户外活动，最近刚去过[地点]，那里的风景真是太美了！'";
+            }
+            else if (userMessage.toLowerCase().includes("家庭") || userMessage.toLowerCase().includes("父母")) {
+                reply = "在家庭沟通方面，建议：\n1. 选择双方都放松的时间沟通\n2. 表达时用'我'而不是'你'开头\n3. 理解代际差异\n4. 重视非语言沟通\n\n例如与父母沟通可以这样说：'爸/妈，我理解你们关心我的工作选择。我很感激你们的建议，同时我也希望能按照自己的兴趣发展。我们可以一起讨论一个折中的方案吗？'";
+            }
+            else {
+                reply = "感谢您的提问！在沟通中，真诚和尊重是最重要的原则。根据您描述的情况，我建议：\n1. 先倾听对方的观点，确保完全理解\n2. 表达时使用'我'语句（如：'我感到...'而不是'你让我...'）\n3. 明确表达需求但保持灵活性\n4. 在情绪激动时暂停对话，冷静后再继续\n\n您能再具体描述一下您所处的沟通场景吗？这样我可以提供更有针对性的建议。";
+            }
+            
+            addMessage(reply, 'assistant');
+        }
+        
+        // 事件监听
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // 场景建议
+        const sceneCards = document.querySelectorAll('.scene-card');
+        sceneCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const scene = card.getAttribute('data-scene');
+                let suggestion = "";
+                
+                // 根据场景生成建议
+                switch(scene) {
+                    case 'work':
+                        suggestion = "我正在准备一个重要的工作会议，需要向团队汇报项目进展并协调下一步计划。请帮我设计一段开场白，既专业又友好。";
+                        break;
+                    case 'love':
+                        suggestion = "我想向喜欢的人表达心意，但不知道如何开口。请帮我构思一段真诚但不给对方压力的告白。";
+                        break;
+                    case 'social':
+                        suggestion = "我将参加一个行业交流会，需要向陌生人介绍自己并建立联系。请帮我设计一个简洁有力的自我介绍。";
+                        break;
+                    case 'family':
+                        suggestion = "我想和父母讨论我的职业选择，他们可能不理解我的决定。请帮我构思一段既能表达自己想法又能尊重父母感受的话。";
+                        break;
+                }
+                
+                // 添加消息
+                chatInput.value = suggestion;
+                sendMessage();
+            });
+        });
+        
+        // 辅助函数
+        function showProgress(text, percent) {
+            progressContainer.style.display = 'block';
+            progressText.textContent = text;
+            progressBar.style.width = percent + '%';
+        }
+        
+        function updateProgress(percent) {
+            progressBar.style.width = percent + '%';
+            progressText.textContent = `正在处理中... ${percent}%`;
+        }
+        
+        // 初始化页面
+        chatInput.focus();
+    </script>
+</body>
+</html>
